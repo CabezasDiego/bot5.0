@@ -1,0 +1,30 @@
+name: research
+on:
+  workflow_dispatch:
+  push:
+    paths: ["bot/**", "research.py", "tests/**", ".github/workflows/research.yml"]
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest -q tests
+      - uses: actions/cache@v4
+        with:
+          path: data
+          key: btc-4h-${{ github.run_id }}
+          restore-keys: btc-4h-
+      - name: Investigación walk-forward + holdout
+        run: rm -f data/*.csv && python research.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: research
+          path: |
+            reports/
+            config/strategy.json
