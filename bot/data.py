@@ -90,9 +90,10 @@ def load_history(symbol="BTCUSDT", interval="4h", start="2018-01", cache="data")
     else:
         try:
             df = _frame(binance_monthly(symbol, interval, start))
+            print(f"Datos: Binance {symbol} {interval}")
             last = int(df["open_time"].iloc[-1].timestamp() * 1000) + INTERVAL_MS[interval]
-            df = _frame(pd.concat([df, _frame(binance_recent(symbol, interval, last))]).values.tolist())
-            df.attrs["source"] = "binance"
+            reciente = _frame(binance_recent(symbol, interval, last))
+            df = pd.concat([df, reciente]).drop_duplicates("open_time").sort_values("open_time").reset_index(drop=True)
         except Exception as e:
             print(f"Binance no disponible ({e}); uso Coinbase BTC-USD como respaldo")
             df = coinbase(interval, int(pd.Timestamp(start + "-01", tz="UTC").timestamp() * 1000))
